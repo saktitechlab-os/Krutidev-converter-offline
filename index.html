@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1a4d2e" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1b12" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Unicode से Kruti Dev 010/011 converter — Government documents के लिए offline-capable tool">
+  <title>Unicode → Kruti Dev Converter</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="KrutiDev">
+  <style>
+    :root {
+      --bg: #f4efe4;
+      --bg-elevated: #fffdf8;
+      --surface: #ffffff;
+      --surface-hover: #faf7f0;
+      --ink: #1c1915;
+      --ink-muted: #5c564c;
+      --ink-light: #8a8276;
+      --primary: #1a4d2e;
+      --primary-hover: #153d24;
+      --primary-light: #e8f2eb;
+      --accent: #c45c12;
+      --accent-hover: #a04a0f;
+      --border: #e2d8c4;
+      --border-focus: #1a4d2e;
+      --error: #b91c1c;
+      --success: #166534;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --transition: 150ms ease;
+      --font-sans: "Inter", "Segoe UI", "Noto Sans Devanagari", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1b12;
+        --bg-elevated: #14281c;
+        --surface: #1a2e20;
+        --surface-hover: #1f3a28;
+        --ink: #f0ebe3;
+        --ink-muted: #9a9084;
+        --ink-light: #6b6358;
+        --primary: #4ade80;
+        --primary-hover: #34d399;
+        --primary-light: #064e2e;
+        --accent: #fb923c;
+        --accent-hover: #f97316;
+        --border: #2a4a35;
+        --border-focus: #4ade80;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.2);
+        --shadow-md: 0 4px 12px rgba(0,0,0,.3);
+        --shadow-lg: 0 12px 32px rgba(0,0,0,.4);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; padding: 0; }
+
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    @supports (background: linear-gradient(#ff9933 0 6px)) {
+      body {
+        background-image:
+          linear-gradient(#ff9933 0 6px),
+          linear-gradient(#138808 100% 6px),
+          var(--bg);
+        background-repeat: no-repeat;
+      }
+    }
+
+    .app {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 24px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2.5vw, 20px);
+    }
+
+    header {
+      text-align: center;
+      padding: clamp(8px, 2vw, 12px) 0;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: clamp(1.25rem, 3vw, 1.5rem);
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .logo svg { width: 32px; height: 32px; flex-shrink: 0; color: var(--primary); }
+
+    .tagline {
+      color: var(--ink-muted);
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card:focus-within { border-color: var(--border-focus); box-shadow: var(--shadow-md); }
+
+    .card-header {
+      padding: clamp(12px, 2.5vw, 16px) clamp(16px, 3vw, 20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon { width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-body { padding: clamp(12px, 2.5vw, 16px) clamp(16px, 3vw, 20px); }
+
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      font-weight: 400;
+      color: var(--ink-muted);
+      font-size: 0.8rem;
+      margin-left: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      resize: vertical;
+      background: var(--bg-elevated);
+      color: var(--ink);
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-focus) 20%, transparent);
+      background: var(--surface);
+    }
+
+    textarea::placeholder { color: var(--ink-light); }
+
+    #unicodeIn { font-family: var(--font-sans), "Noto Sans Devanagari", system-ui, sans-serif; }
+    #krutiOut { font-family: var(--font-mono); font-size: 0.95rem; min-height: 120px; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .btn-secondary {
+      background: var(--surface-hover);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--bg-elevated); border-color: var(--ink-muted); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+      padding: 10px 16px;
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--primary-light); }
+
+    .btn-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+      min-height: 20px;
+    }
+    .status.ok { color: var(--success); }
+    .status.warn { color: var(--accent); }
+    .status.error { color: var(--error); }
+
+    .mode-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .mode-tab:hover { color: var(--ink); background: var(--surface); }
+    .mode-tab.active { color: var(--primary); background: var(--surface); box-shadow: var(--shadow-sm); }
+
+    .suggestions {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .suggestions.show { display: flex; }
+    .suggestion-btn {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .suggestion-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .suggestion-btn.primary { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    .shortcuts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--ink-light);
+    }
+    .shortcut { display: flex; align-items: center; gap: 6px; }
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--ink-muted);
+    }
+
+    .guide-card .guide-list {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--ink-muted);
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    .guide-list li { margin-bottom: 6px; }
+    .guide-list strong { color: var(--ink); }
+    .guide-list code {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      background: var(--bg-elevated);
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--ink-light);
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    footer a { color: var(--primary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .actions { flex-direction: column; }
+      .btn { flex: 1; }
+      .shortcuts { flex-direction: column; gap: 8px; }
+    }
+
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .card { animation: fadeIn 300ms ease forwards; }
+    .card:nth-child(2) { animation-delay: 50ms; }
+    .card:nth-child(3) { animation-delay: 100ms; }
+    .card:nth-child(4) { animation-delay: 150ms; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 17H20"/>
+          <path d="M12 5v14"/>
+          <path d="M8 12h8"/>
+          <circle cx="12" cy="19.5" r="2.5"/>
+        </svg>
+        KrutiDev Converter
+      </div>
+      <p class="tagline">Unicode ↔ Kruti Dev 010/011 — Government docs ready, works offline</p>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="input-title">
+        <div class="card-header">
+          <h2 class="card-title" id="input-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 17H20"/><path d="M12 5v14"/><path d="M8 12h8"/></svg>
+            Hindi Input
+          </h2>
+          <span class="badge" id="modeBadge">English → Hindi</span>
+        </div>
+        <div class="card-body">
+          <div class="mode-tabs" role="tablist" aria-label="Input mode">
+            <button class="mode-tab active" role="tab" aria-selected="true" id="tabType" data-mode="type">English → Hindi</button>
+            <button class="mode-tab" role="tab" aria-selected="false" id="tabPaste" data-mode="paste">Paste Unicode</button>
+          </div>
+
+          <div class="field">
+            <label for="unicodeIn">Hindi (Unicode) <span class="hint" id="typeHint">Type in English, press Space: <kbd>namaste</kbd> → <kbd>नमस्ते</kbd></span></label>
+            <textarea id="unicodeIn" lang="hi" placeholder="Type in English and press Space, or paste Unicode Hindi here…" spellcheck="false" aria-describedby="typeHint"></textarea>
+            <div class="suggestions" id="suggestions" role="listbox" aria-label="Word suggestions"></div>
+          </div>
+
+          <div class="field" style="margin-bottom: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <span class="status" id="imeStatus">Hindi typing ON — Press Space to convert</span>
+              <button type="button" class="btn btn-ghost" id="toggleIme" aria-pressed="true">English Lock</button>
+            </div>
+          </div>
+
+          <div class="shortcuts" aria-label="Keyboard shortcuts">
+            <span class="shortcut"><kbd class="kbd">Space</kbd> Convert word</span>
+            <span class="shortcut"><kbd class="kbd">Enter</kbd> Convert + newline</span>
+            <span class="shortcut"><kbd class="kbd">Ctrl+Enter</kbd> Convert all</span>
+            <span class="shortcut"><kbd class="kbd">Esc</kbd> Clear suggestions</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="output-title">
+        <div class="card-header">
+          <h2 class="card-title" id="output-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            Kruti Dev Output
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label for="krutiOut">Kruti Dev Text <span class="hint">Copy this, paste in Word, apply <strong>Kruti Dev 010</strong> font</span></label>
+            <textarea id="krutiOut" readonly placeholder="Converted Kruti Dev text appears here…" aria-describedby="krutiOut"></textarea>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="copyBtn">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Kruti Dev
+            </button>
+            <button type="button" class="btn btn-secondary" id="downloadBtn">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download .txt
+            </button>
+            <button type="button" class="btn btn-secondary" id="clearBtn">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clear
+            </button>
+            <span class="status" id="copyStatus" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card guide-card" aria-labelledby="guide-title">
+        <div class="card-header">
+          <h2 class="card-title" id="guide-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            How to use in Word / Government files
+          </h2>
+        </div>
+        <div class="card-body">
+          <ol class="guide-list">
+            <li>Verify Hindi text above is correct (matras, punctuation, full stops)</li>
+            <li>Click <strong>Copy Kruti Dev</strong> — copies encoded text to clipboard</li>
+            <li>Paste in MS Word / LibreOffice</li>
+            <li>Select all pasted text → set font to <strong><code>Kruti Dev 010</code></strong> (or <code>Kruti Dev 011</code> per office standard)</li>
+            <li>English headings: type separately in <code>Times New Roman</code> — Kruti Dev renders English as Hindi glyphs</li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Runs entirely on your device — no server, no tracking. <strong>Proofread official documents after converting.</strong></p>
+      <p style="margin-top: 6px;">Share via WhatsApp: send this folder, or just <code>index.html</code>, <code>converter.js</code>, <code>transliterate.js</code>, <code>app.js</code>, <code>manifest.json</code>, <code>sw.js</code>, <code>favicon.svg</code>. Open <code>index.html</code> in Chrome/Edge — works offline after first load.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

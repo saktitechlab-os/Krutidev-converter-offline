@@ -1,0 +1,31 @@
+{
+  "name": "KrutiDev Converter",
+  "short_name": "KrutiDev",
+  "description": "Unicode to Kruti Dev 010/011 converter for government documents. Works offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4efe4",
+  "theme_color": "#1a4d2e",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "New Conversion",
+      "short_name": "Convert",
+      "description": "Start a new Unicode to Kruti Dev conversion",
+      "url": "./index.html",
+      "icons": [{ "src": "favicon.svg", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
