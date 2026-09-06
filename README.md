@@ -1,8 +1,3 @@
-Bilkul bhai ❤️ Ab **final complete README.md** de raha hoon — **About + Features + Installation + Windows setup + How to Use + Offline use + PWA + Developer setup + Structure + Roadmap + Contributing + License** sab ek hi jagah.
-
-**Neeche wala pura content direct copy-paste kar dena `README.md` me:**
-
-````markdown
 # KrutiDev Converter Offline
 
 > A fast, simple and privacy-friendly Hindi text converter for **Unicode ↔ KrutiDev**, designed to work offline.
